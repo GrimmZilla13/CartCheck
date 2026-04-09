@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>CartCheck – Know Before You Go</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f3ee;
+  --white: #ffffff;
+  --green: #2a9d5c;
+  --green-light: #e8f7ef;
+  --green-mid: #c2e8d4;
+  --orange: #f4845f;
+  --orange-light: #fef0eb;
+  --blue: #4a90d9;
+  --blue-light: #eaf3fd;
+  --red: #e85d5d;
+  --red-light: #fdeaea;
+  --yellow: #e6a817;
+  --yellow-light: #fef8e7;
+  --text: #1a1f2e;
+  --text-mid: #4a5568;
+  --text-soft: #9aa3b2;
+  --border: #e8e4da;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.09);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  --radius: 20px;
+  --radius-sm: 12px;
+  --heading: 'Nunito', sans-serif;
+  --body: 'Outfit', sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: 60px;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  width: 100%;
+  background: var(--white);
+  border-bottom: 1.5px solid var(--border);
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-icon {
+  width: 38px; height: 38px;
+  background: var(--green);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 10px rgba(42,157,92,0.3);
+  color: white;
+}
+.brand-icon svg { width: 20px; height: 20px; stroke: white; }
+.brand-name { font-family: var(--heading); font-size: 20px; font-weight: 900; color: var(--text); letter-spacing: -0.5px; }
+.brand-name span { color: var(--green); }
+
+.cart-badge {
+  background: var(--green);
+  color: white;
+  font-family: var(--heading);
+  font-size: 13px;
+  font-weight: 800;
+  padding: 5px 13px;
+  border-radius: 20px;
+  text-align: center;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(42,157,92,0.3);
+}
+.cart-badge.bump { transform: scale(1.18); }
+
+/* ── CONTAINER ── */
+.container { width: 100%; max-width: 500px; padding: 20px 16px 0; }
+
+.section-heading {
+  font-family: var(--heading);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-soft);
+  margin-bottom: 10px;
+}
+
+/* ── STORE PICKER ── */
+.store-section { margin-bottom: 20px; }
+.store-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.store-scroll::-webkit-scrollbar { display: none; }
+
+.store-chip {
+  display: flex; flex-direction: column; align-items: center; gap: 7px;
+  padding: 12px 14px 10px;
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  min-width: 72px;
+  font-family: var(--body);
+  box-shadow: var(--shadow-sm);
+  color: var(--text-soft);
+}
+.store-chip svg { width: 22px; height: 22px; stroke: currentColor; transition: stroke 0.2s; }
+.store-chip:hover { border-color: var(--green-mid); transform: translateY(-2px); box-shadow: var(--shadow-md); color: var(--green); }
+.store-chip.active { border-color: var(--green); background: var(--green-light); color: var(--green); box-shadow: 0 4px 14px rgba(42,157,92,0.18); transform: translateY(-2px); }
+.store-chip .label { font-size: 10px; font-weight: 700; text-align: center; white-space: nowrap; letter-spacing: 0.2px; color: var(--text-mid); }
+.store-chip.active .label { color: var(--green); }
+
+/* ── TOTAL HERO ── */
+.total-hero {
+  background: var(--green);
+  border-radius: var(--radius);
+  padding: 28px 24px 24px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(42,157,92,0.35);
+}
+.total-hero::before { content:''; position:absolute; top:-50px; right:-50px; width:180px; height:180px; background:rgba(255,255,255,0.07); border-radius:50%; }
+.total-hero::after { content:''; position:absolute; bottom:-30px; left:-30px; width:120px; height:120px; background:rgba(255,255,255,0.05); border-radius:50%; }
+
+.total-label { font-family:var(--heading); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:2px; color:rgba(255,255,255,0.7); margin-bottom:6px; }
+.total-amount { font-family:var(--heading); font-size:58px; font-weight:900; color:white; letter-spacing:-2px; line-height:1; transition:transform 0.25s cubic-bezier(.34,1.56,.64,1); }
+.total-amount.bump { transform:scale(1.06); }
+
+.total-row { display:flex; align-items:center; justify-content:space-between; margin-top:14px; }
+.total-chips { display:flex; gap:8px; }
+.total-chip { background:rgba(255,255,255,0.18); color:rgba(255,255,255,0.9); font-size:12px; font-weight:600; padding:4px 11px; border-radius:20px; }
+.store-tag { background:rgba(255,255,255,0.18); color:white; font-size:12px; font-weight:700; padding:5px 12px; border-radius:20px; font-family:var(--heading); }
+
+/* ── ACTION BUTTONS ── */
+.action-row { display:flex; gap:10px; margin-bottom:16px; }
+
+.btn-scan {
+  flex: 1;
+  background: var(--text);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 15px 20px;
+  font-family: var(--heading);
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: all 0.2s;
+  box-shadow: var(--shadow-md);
+}
+.btn-scan svg { width: 20px; height: 20px; stroke: white; flex-shrink: 0; }
+.btn-scan:hover { transform:translateY(-2px); box-shadow:var(--shadow-lg); }
+.btn-scan:active { transform:translateY(0); }
+.btn-scan.stop { background: var(--red); }
+
+.btn-manual {
+  background: var(--white);
+  color: var(--text-mid);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 15px 18px;
+  font-family: var(--heading);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: all 0.2s;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+.btn-manual svg { width: 17px; height: 17px; stroke: currentColor; flex-shrink: 0; }
+.btn-manual:hover { border-color:var(--green); color:var(--green); transform:translateY(-2px); box-shadow:var(--shadow-md); }
+
+/* ── WARNING ── */
+.warning-bar {
+  background: var(--yellow-light);
+  border: 1.5px solid var(--yellow);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 13px; font-weight: 600;
+  color: #9a6e00;
+  margin-bottom: 14px;
+  display: none; align-items: center; gap: 8px;
+}
+.warning-bar svg { width:16px; height:16px; stroke:#9a6e00; flex-shrink:0; }
+.warning-bar.visible { display: flex; }
+
+/* ── SCANNER ── */
+.scanner-wrap { margin-bottom:14px; display:none; border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-lg); }
+.scanner-wrap.visible { display:block; }
+.scanner-box { background:#111; position:relative; }
+#reader { width:100%; }
+.scanner-overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; }
+.scan-frame { width:230px; height:115px; border:3px solid white; border-radius:10px; position:relative; box-shadow:0 0 0 2000px rgba(0,0,0,0.5); }
+.corner { position:absolute; width:22px; height:22px; border-color:var(--green); border-style:solid; }
+.corner.tl { top:-3px; left:-3px; border-width:4px 0 0 4px; border-radius:6px 0 0 0; }
+.corner.tr { top:-3px; right:-3px; border-width:4px 4px 0 0; border-radius:0 6px 0 0; }
+.corner.bl { bottom:-3px; left:-3px; border-width:0 0 4px 4px; border-radius:0 0 0 6px; }
+.corner.br { bottom:-3px; right:-3px; border-width:0 4px 4px 0; border-radius:0 0 6px 0; }
+.scan-line { position:absolute; left:6px; right:6px; height:2px; background:linear-gradient(90deg,transparent,var(--green),transparent); box-shadow:0 0 8px var(--green); animation:scanMove 1.8s ease-in-out infinite; }
+@keyframes scanMove { 0%,100%{top:12px} 50%{top:calc(100% - 14px)} }
+.scanner-hint-bar { background:rgba(0,0,0,0.7); padding:12px 16px; text-align:center; font-size:13px; font-weight:600; color:rgba(255,255,255,0.8); display:flex; align-items:center; justify-content:center; gap:8px; }
+.scanner-hint-bar svg { width:15px; height:15px; stroke:rgba(255,255,255,0.8); }
+
+/* ── LOOKUP CARD ── */
+.lookup-card { margin-bottom:14px; display:none; animation:slideDown 0.3s ease; }
+.lookup-card.visible { display:block; }
+@keyframes slideDown { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
+
+.lookup-inner { background:var(--white); border:2px solid var(--border); border-radius:var(--radius-sm); padding:16px 18px; display:flex; align-items:center; gap:14px; box-shadow:var(--shadow-sm); }
+.lookup-inner.loading { border-color:var(--yellow); background:var(--yellow-light); }
+.lookup-inner.success { border-color:var(--green); background:var(--green-light); }
+.lookup-inner.error { border-color:var(--red); background:var(--red-light); }
+
+.lookup-icon { flex-shrink:0; display:flex; align-items:center; justify-content:center; width:28px; height:28px; }
+.lookup-icon svg { width:24px; height:24px; }
+.lookup-inner.loading .lookup-icon svg { stroke: var(--yellow); }
+.lookup-inner.success .lookup-icon svg { stroke: var(--green); }
+.lookup-inner.error .lookup-icon svg { stroke: var(--red); }
+
+.lookup-body { flex:1; }
+.lookup-title { font-family:var(--heading); font-size:14px; font-weight:800; color:var(--text); }
+.lookup-sub { font-size:12px; color:var(--text-mid); margin-top:2px; font-weight:500; }
+
+.btn-add-confirm {
+  background:var(--green); color:white; border:none; border-radius:10px;
+  padding:10px 18px; font-family:var(--heading); font-size:14px; font-weight:800;
+  cursor:pointer; transition:all 0.2s; flex-shrink:0;
+  box-shadow:0 3px 10px rgba(42,157,92,0.3);
+}
+.btn-add-confirm:hover { background:#23874e; transform:translateY(-1px); }
+
+.spinner { width:22px; height:22px; border:3px solid rgba(230,168,23,0.25); border-top-color:var(--yellow); border-radius:50%; animation:spin 0.7s linear infinite; flex-shrink:0; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ── MANUAL FORM ── */
+.manual-form { background:var(--white); border:2px solid var(--border); border-radius:var(--radius-sm); padding:20px; margin-bottom:16px; display:none; box-shadow:var(--shadow-sm); }
+.manual-form.visible { display:block; }
+.manual-form .form-title { font-family:var(--heading); font-size:14px; font-weight:800; color:var(--text); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.manual-form .form-title svg { width:17px; height:17px; stroke:var(--text-mid); }
+.form-row { display:flex; gap:10px; align-items:flex-end; }
+.field { display:flex; flex-direction:column; gap:5px; flex:1; }
+.field-lbl { font-size:11px; font-weight:700; color:var(--text-soft); text-transform:uppercase; letter-spacing:0.8px; }
+.field input { background:var(--bg); border:2px solid var(--border); border-radius:10px; padding:11px 14px; font-family:var(--body); font-size:15px; color:var(--text); outline:none; transition:border-color 0.2s,box-shadow 0.2s; width:100%; }
+.field input:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(42,157,92,0.12); background:white; }
+.field input::placeholder { color:var(--text-soft); }
+.btn-add-manual { background:var(--green); color:white; border:none; border-radius:10px; padding:12px 20px; font-family:var(--heading); font-size:15px; font-weight:800; cursor:pointer; transition:all 0.2s; flex-shrink:0; box-shadow:0 3px 10px rgba(42,157,92,0.3); }
+.btn-add-manual:hover { background:#23874e; transform:translateY(-1px); }
+.err-msg { font-size:12px; color:var(--red); margin-top:8px; font-weight:600; display:none; }
+.err-msg.show { display:block; }
+
+/* ── CART ── */
+.cart-section { margin-bottom:16px; }
+.cart-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.btn-clear { font-family:var(--heading); font-size:12px; font-weight:700; color:var(--red); background:var(--red-light); border:none; border-radius:8px; padding:5px 12px; cursor:pointer; opacity:0; pointer-events:none; transition:all 0.2s; display:flex; align-items:center; gap:5px; }
+.btn-clear svg { width:13px; height:13px; stroke:var(--red); }
+.btn-clear.visible { opacity:1; pointer-events:all; }
+.btn-clear:hover { background:var(--red); color:white; }
+.btn-clear:hover svg { stroke:white; }
+
+.cart-empty-state { background:var(--white); border:2px dashed var(--border); border-radius:var(--radius); padding:40px 24px; text-align:center; box-shadow:var(--shadow-sm); }
+.empty-icon { display:flex; align-items:center; justify-content:center; margin:0 auto 14px; width:56px; height:56px; background:var(--bg); border-radius:16px; }
+.empty-icon svg { width:28px; height:28px; stroke:var(--text-soft); }
+.empty-title { font-family:var(--heading); font-size:18px; font-weight:800; color:var(--text-mid); margin-bottom:6px; }
+.empty-sub { font-size:14px; color:var(--text-soft); line-height:1.6; }
+
+.cart-list { display:flex; flex-direction:column; gap:10px; }
+.cart-item { background:var(--white); border-radius:var(--radius-sm); padding:15px 16px; display:flex; align-items:center; gap:13px; box-shadow:var(--shadow-sm); border:1.5px solid var(--border); animation:itemIn 0.3s cubic-bezier(.34,1.56,.64,1); transition:box-shadow 0.2s,transform 0.2s; }
+.cart-item:hover { box-shadow:var(--shadow-md); transform:translateY(-1px); }
+@keyframes itemIn { from{opacity:0;transform:scale(0.92) translateY(-8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+
+.item-index { width:28px; height:28px; background:var(--bg); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:var(--heading); font-size:12px; font-weight:800; color:var(--text-soft); flex-shrink:0; }
+.item-body { flex:1; overflow:hidden; }
+.item-name { font-family:var(--heading); font-size:14px; font-weight:700; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.item-meta { font-size:11px; color:var(--text-soft); margin-top:3px; display:flex; align-items:center; gap:6px; }
+.meta-tag { background:var(--bg); border-radius:5px; padding:2px 7px; font-weight:600; display:inline-flex; align-items:center; gap:4px; }
+.meta-tag svg { width:10px; height:10px; stroke:currentColor; }
+.meta-tag.scan { background:var(--blue-light); color:var(--blue); }
+.meta-tag.manual { background:var(--orange-light); color:var(--orange); }
+.item-price { font-family:var(--heading); font-size:17px; font-weight:900; color:var(--green); flex-shrink:0; }
+.btn-remove { width:30px; height:30px; background:var(--bg); border:none; border-radius:8px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0; }
+.btn-remove svg { width:15px; height:15px; stroke:var(--text-soft); }
+.btn-remove:hover { background:var(--red-light); }
+.btn-remove:hover svg { stroke:var(--red); }
+
+/* ── RECEIPT FOOTER ── */
+.receipt-footer { background:var(--white); border:1.5px solid var(--border); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-sm); display:none; margin-top:4px; }
+.receipt-footer.visible { display:block; }
+.receipt-row { display:flex; align-items:center; justify-content:space-between; padding:13px 20px; font-size:14px; border-bottom:1px solid var(--border); }
+.receipt-row:last-child { border-bottom:none; }
+.receipt-row .lbl { color:var(--text-mid); font-weight:500; }
+.receipt-row .val { font-family:var(--heading); font-weight:700; color:var(--text); }
+.receipt-row.total-row { background:var(--green-light); }
+.receipt-row.total-row .lbl { font-weight:700; color:var(--green); font-family:var(--heading); font-size:15px; }
+.receipt-row.total-row .val { color:var(--green); font-size:20px; }
+.tax-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:13px 20px; border-bottom:1px solid var(--border); cursor:pointer; user-select:none; }
+.tax-toggle-row .lbl { color:var(--text-mid); font-size:14px; font-weight:500; display:flex; align-items:center; gap:8px; }
+.tax-toggle-row .lbl svg { width:16px; height:16px; stroke:var(--text-mid); }
+.pill-toggle { width:42px; height:24px; background:var(--border); border-radius:12px; position:relative; transition:background 0.25s; flex-shrink:0; }
+.pill-toggle.on { background:var(--green); }
+.pill-toggle::after { content:''; position:absolute; width:18px; height:18px; background:white; border-radius:50%; top:3px; left:3px; transition:transform 0.25s cubic-bezier(.34,1.56,.64,1); box-shadow:0 1px 4px rgba(0,0,0,0.2); }
+.pill-toggle.on::after { transform:translateX(18px); }
+.tax-rate-row { display:none; align-items:center; justify-content:space-between; padding:12px 20px; border-bottom:1px solid var(--border); }
+.tax-rate-row.visible { display:flex; }
+.tax-rate-row .lbl { color:var(--text-soft); font-size:13px; font-weight:500; }
+.tax-rate-input-wrap { display:flex; align-items:center; gap:6px; }
+.tax-rate-input { background:var(--bg); border:1.5px solid var(--border); border-radius:8px; padding:6px 10px; font-family:var(--heading); font-size:13px; font-weight:700; color:var(--text); width:55px; text-align:center; outline:none; transition:border-color 0.2s; }
+.tax-rate-input:focus { border-color:var(--green); }
+.pct-lbl { font-size:13px; color:var(--text-soft); }
+.tax-val { font-family:var(--heading); font-size:13px; font-weight:700; color:var(--text-mid); }
+</style>
+</head>
+<body>
+
+<!-- Top Bar -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-icon">
+      <i data-lucide="shopping-cart"></i>
+    </div>
+    <div class="brand-name">Cart<span>Check</span></div>
+  </div>
+  <div class="cart-badge" id="cartBadge">$0.00</div>
+</div>
+
+<div class="container">
+
+  <!-- Store Picker -->
+  <div class="store-section">
+    <div class="section-heading">Where are you shopping?</div>
+    <div class="store-scroll">
+      <button class="store-chip" onclick="selectStore('Walmart')" data-store="Walmart">
+        <i data-lucide="store"></i><span class="label">Walmart</span>
+      </button>
+      <button class="store-chip" onclick="selectStore('Target')" data-store="Target">
+        <i data-lucide="crosshair"></i><span class="label">Target</span>
+      </button>
+      <button class="store-chip" onclick="selectStore('Publix')" data-store="Publix">
+        <i data-lucide="shopping-bag"></i><span class="label">Publix</span>
+      </button>
+      <button class="store-chip" onclick="selectStore('Kroger')" data-store="Kroger">
+        <i data-lucide="building-2"></i><span class="label">Kroger</span>
+      </button>
+      <button class="store-chip" onclick="selectStore('Aldi')" data-store="Aldi">
+        <i data-lucide="tag"></i><span class="label">Aldi</span>
+      </button>
+      <button class="store-chip" onclick="selectStore('Whole Foods')" data-store="Whole Foods">
+        <i data-lucide="leaf"></i><span class="label">Whole Foods</span>
+      </button>
+      <button class="store-chip" onclick="selectStore('Costco')" data-store="Costco">
+        <i data-lucide="package"></i><span class="label">Costco</span>
+      </button>
+      <button class="store-chip" data-store="Trader Joe's" onclick="selectStore(this.dataset.store)">
+        <i data-lucide="flower-2"></i><span class="label">Trader Joe's</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Total Hero -->
+  <div class="total-hero">
+    <div class="total-label">Running Total</div>
+    <div class="total-amount" id="totalDisplay">$0.00</div>
+    <div class="total-row">
+      <div class="total-chips">
+        <div class="total-chip" id="itemCountChip">0 items</div>
+      </div>
+      <div class="store-tag" id="storeTag">No store selected</div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-row">
+    <button class="btn-scan" id="scanBtn" onclick="toggleScanner()">
+      <i data-lucide="scan-line" id="scanIcon"></i>
+      <span id="scanLabel">Scan Item</span>
+    </button>
+    <button class="btn-manual" onclick="toggleManual()">
+      <i data-lucide="pencil"></i> Manual
+    </button>
+  </div>
+
+  <!-- Warning -->
+  <div class="warning-bar" id="warningBar">
+    <i data-lucide="alert-triangle"></i>
+    Please pick a store first!
+  </div>
+
+  <!-- Scanner -->
+  <div class="scanner-wrap" id="scannerWrap">
+    <div class="scanner-box">
+      <div id="reader"></div>
+      <div class="scanner-overlay">
+        <div class="scan-frame">
+          <div class="corner tl"></div><div class="corner tr"></div>
+          <div class="corner bl"></div><div class="corner br"></div>
+          <div class="scan-line"></div>
+        </div>
+      </div>
+    </div>
+    <div class="scanner-hint-bar">
+      <i data-lucide="info"></i>
+      Point camera at the barcode on your item
+    </div>
+  </div>
+
+  <!-- Lookup Status -->
+  <div class="lookup-card" id="lookupCard">
+    <div class="lookup-inner" id="lookupInner">
+      <div class="lookup-icon" id="lookupIcon">
+        <i data-lucide="search"></i>
+      </div>
+      <div class="lookup-body">
+        <div class="lookup-title" id="lookupTitle">Finding product…</div>
+        <div class="lookup-sub" id="lookupSub"></div>
+      </div>
+      <button class="btn-add-confirm" id="btnAddConfirm" onclick="confirmAdd()" style="display:none">Add to Cart</button>
+    </div>
+  </div>
+
+  <!-- Manual Form -->
+  <div class="manual-form" id="manualForm">
+    <div class="form-title">
+      <i data-lucide="pencil"></i> Add Item Manually
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <div class="field-lbl">Item Name</div>
+        <input type="text" id="itemName" placeholder="e.g. Milk, Eggs…" autocomplete="off"/>
+      </div>
+      <div class="field" style="max-width:110px">
+        <div class="field-lbl">Price ($)</div>
+        <input type="number" id="itemPrice" placeholder="0.00" step="0.01" min="0"/>
+      </div>
+      <button class="btn-add-manual" onclick="addManual()">Add</button>
+    </div>
+    <div class="err-msg" id="errMsg">Please enter a name and a valid price.</div>
+  </div>
+
+  <!-- Cart -->
+  <div class="cart-section">
+    <div class="cart-header">
+      <div class="section-heading" style="margin-bottom:0">Your Cart</div>
+      <button class="btn-clear" id="btnClear" onclick="clearCart()">
+        <i data-lucide="trash-2"></i> Clear All
+      </button>
+    </div>
+    <div id="cartList"></div>
+  </div>
+
+  <!-- Receipt Footer -->
+  <div class="receipt-footer" id="receiptFooter">
+    <div class="receipt-row">
+      <span class="lbl">Subtotal</span>
+      <span class="val" id="subtotalVal">$0.00</span>
+    </div>
+    <div class="tax-toggle-row" onclick="toggleTax()">
+      <span class="lbl"><i data-lucide="receipt"></i> Add estimated tax?</span>
+      <div class="pill-toggle" id="taxToggle"></div>
+    </div>
+    <div class="tax-rate-row" id="taxRateRow">
+      <span class="lbl">Tax rate</span>
+      <div class="tax-rate-input-wrap">
+        <input class="tax-rate-input" type="number" id="taxRate" value="7" step="0.1" min="0" max="20" oninput="updateReceipt()"/>
+        <span class="pct-lbl">%</span>
+        <span class="tax-val" id="taxVal">+$0.00</span>
+      </div>
+    </div>
+    <div class="receipt-row total-row">
+      <span class="lbl" id="totalLabel">Total</span>
+      <span class="val" id="grandTotal">$0.00</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let items = [];
+let selectedStore = null;
+let taxEnabled = false;
+let scannerRunning = false;
+let html5QrCode = null;
+let pendingItem = null;
+let lastBarcode = null;
+let scanCooldown = false;
+
+// Init Lucide icons
+lucide.createIcons();
+
+// ── Store ─────────────────────────────────────────────────
+function selectStore(name) {
+  selectedStore = name;
+  document.querySelectorAll('.store-chip').forEach(el => el.classList.toggle('active', el.dataset.store === name));
+  document.getElementById('storeTag').textContent = name;
+  document.getElementById('warningBar').classList.remove('visible');
+}
+
+// ── Scanner ───────────────────────────────────────────────
+function toggleScanner() {
+  if (!selectedStore) {
+    document.getElementById('warningBar').classList.add('visible');
+    setTimeout(() => document.getElementById('warningBar').classList.remove('visible'), 3000);
+    return;
+  }
+  scannerRunning ? stopScanner() : startScanner();
+}
+
+function startScanner() {
+  document.getElementById('scannerWrap').classList.add('visible');
+  document.getElementById('scanBtn').classList.add('stop');
+  document.getElementById('scanIcon').setAttribute('data-lucide', 'square');
+  document.getElementById('scanLabel').textContent = 'Stop Camera';
+  lucide.createIcons();
+  scannerRunning = true;
+  html5QrCode = new Html5Qrcode("reader");
+  html5QrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 240, height: 120 }, aspectRatio: 1.7 },
+    onScanSuccess, () => {}
+  ).catch(() => {
+    setLookup('error', 'x-circle', 'Camera access denied', 'Allow camera access and try again.', false);
+    stopScanner();
+  });
+}
+
+function stopScanner() {
+  if (html5QrCode && scannerRunning) { html5QrCode.stop().catch(() => {}); html5QrCode = null; }
+  scannerRunning = false;
+  document.getElementById('scannerWrap').classList.remove('visible');
+  document.getElementById('scanBtn').classList.remove('stop');
+  document.getElementById('scanIcon').setAttribute('data-lucide', 'scan-line');
+  document.getElementById('scanLabel').textContent = 'Scan Item';
+  lucide.createIcons();
+}
+
+async function onScanSuccess(barcode) {
+  if (scanCooldown || barcode === lastBarcode) return;
+  lastBarcode = barcode;
+  scanCooldown = true;
+  stopScanner();
+  setLookup('loading', null, 'Looking up product…', 'Barcode: ' + barcode, false);
+  try {
+    const name = await lookupBarcode(barcode);
+    setLookup('loading', null, 'Getting price at ' + selectedStore + '…', name, false);
+    const price = await getClaudePrice(name, selectedStore);
+    pendingItem = { name, price };
+    setLookup('success', 'check-circle', name, selectedStore + '  ·  Est. $' + price.toFixed(2), true);
+  } catch(e) {
+    setLookup('error', 'alert-circle', e.message || 'Product not found', 'Try adding it manually below.', false);
+  }
+  setTimeout(() => { scanCooldown = false; lastBarcode = null; }, 4000);
+}
+
+async function lookupBarcode(barcode) {
+  const res = await fetch('https://world.openfoodfacts.org/api/v0/product/' + barcode + '.json');
+  const data = await res.json();
+  if (data.status !== 1) throw new Error('Product not found — try adding it manually');
+  const p = data.product;
+  const name = p.product_name_en || p.product_name || p.generic_name_en || p.generic_name || '';
+  if (!name.trim()) throw new Error('Product name not available');
+  const brand = p.brands ? p.brands.split(',')[0].trim() : '';
+  return (brand && !name.toLowerCase().includes(brand.toLowerCase())) ? brand + ' ' + name : name;
+}
+
+async function getClaudePrice(productName, store) {
+  const res = await fetch('/.netlify/functions/claude', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 80,
+      system: 'You are a grocery price estimator for major US stores. Respond ONLY with valid JSON like {"price": 3.49} — no other text, no markdown. Always give a realistic estimate.',
+      messages: [{ role: 'user', content: 'Product: "' + productName + '"\nStore: ' + store + '\nEstimate the typical retail price in USD.' }]
+    })
+  });
+  const data = await res.json();
+  const text = (data.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
+  try {
+    const p = JSON.parse(text);
+    if (typeof p.price === 'number' && p.price > 0) return p.price;
+  } catch(e) {}
+  throw new Error('Could not estimate price');
+}
+
+function setLookup(type, iconName, title, sub, showAdd) {
+  const card = document.getElementById('lookupCard');
+  const inner = document.getElementById('lookupInner');
+  card.classList.add('visible');
+  inner.className = 'lookup-inner ' + type;
+
+  const iconWrap = document.getElementById('lookupIcon');
+  if (type === 'loading') {
+    iconWrap.innerHTML = '<div class="spinner"></div>';
+  } else {
+    iconWrap.innerHTML = '<i data-lucide="' + iconName + '"></i>';
+    lucide.createIcons();
+  }
+
+  document.getElementById('lookupTitle').textContent = title;
+  document.getElementById('lookupSub').textContent = sub;
+  document.getElementById('btnAddConfirm').style.display = showAdd ? 'inline-block' : 'none';
+}
+
+function confirmAdd() {
+  if (!pendingItem) return;
+  items.push({ id: Date.now(), name: pendingItem.name, price: pendingItem.price, store: selectedStore, source: 'scan' });
+  pendingItem = null;
+  document.getElementById('lookupCard').classList.remove('visible');
+  render();
+}
+
+// ── Manual ────────────────────────────────────────────────
+function toggleManual() {
+  const f = document.getElementById('manualForm');
+  f.classList.toggle('visible');
+  if (f.classList.contains('visible')) document.getElementById('itemName').focus();
+}
+
+document.getElementById('itemName').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('itemPrice').focus(); });
+document.getElementById('itemPrice').addEventListener('keydown', e => { if (e.key === 'Enter') addManual(); });
+
+function addManual() {
+  const name = document.getElementById('itemName').value.trim();
+  const price = parseFloat(document.getElementById('itemPrice').value);
+  const err = document.getElementById('errMsg');
+  if (!name || isNaN(price) || price < 0) { err.classList.add('show'); setTimeout(() => err.classList.remove('show'), 2500); return; }
+  items.push({ id: Date.now(), name, price, store: selectedStore, source: 'manual' });
+  document.getElementById('itemName').value = '';
+  document.getElementById('itemPrice').value = '';
+  document.getElementById('itemName').focus();
+  render();
+}
+
+// ── Cart ──────────────────────────────────────────────────
+function removeItem(id) { items = items.filter(i => i.id !== id); render(); }
+function clearCart() { items = []; pendingItem = null; document.getElementById('lookupCard').classList.remove('visible'); render(); }
+
+// ── Tax ───────────────────────────────────────────────────
+function toggleTax() {
+  taxEnabled = !taxEnabled;
+  document.getElementById('taxToggle').classList.toggle('on', taxEnabled);
+  document.getElementById('taxRateRow').classList.toggle('visible', taxEnabled);
+  document.getElementById('totalLabel').textContent = taxEnabled ? 'Est. Total w/ Tax' : 'Total';
+  updateReceipt();
+}
+
+function updateReceipt() {
+  const sub = items.reduce((s, i) => s + i.price, 0);
+  const rate = parseFloat(document.getElementById('taxRate').value) || 0;
+  const tax = taxEnabled ? sub * rate / 100 : 0;
+  document.getElementById('subtotalVal').textContent = fmt(sub);
+  document.getElementById('taxVal').textContent = '+' + fmt(tax);
+  document.getElementById('grandTotal').textContent = fmt(sub + tax);
+}
+
+// ── Render ────────────────────────────────────────────────
+const fmt = n => '$' + n.toFixed(2);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function render() {
+  const total = items.reduce((s, i) => s + i.price, 0);
+  const count = items.length;
+
+  const badge = document.getElementById('cartBadge');
+  badge.textContent = fmt(total);
+  badge.classList.add('bump');
+  setTimeout(() => badge.classList.remove('bump'), 300);
+
+  const disp = document.getElementById('totalDisplay');
+  disp.textContent = fmt(total);
+  disp.classList.add('bump');
+  setTimeout(() => disp.classList.remove('bump'), 300);
+
+  document.getElementById('itemCountChip').textContent = count === 1 ? '1 item' : count + ' items';
+  document.getElementById('btnClear').classList.toggle('visible', count > 0);
+  document.getElementById('receiptFooter').classList.toggle('visible', count > 0);
+  updateReceipt();
+
+  const list = document.getElementById('cartList');
+
+  if (count === 0) {
+    list.innerHTML = `
+      <div class="cart-empty-state">
+        <div class="empty-icon"><i data-lucide="shopping-basket"></i></div>
+        <div class="empty-title">Your cart is empty</div>
+        <div class="empty-sub">Tap <strong>Scan Item</strong> to scan a barcode,<br>or tap <strong>Manual</strong> to type one in.</div>
+      </div>`;
+    lucide.createIcons();
+    return;
+  }
+
+  list.innerHTML = `<div class="cart-list">${items.map((item, i) => `
+    <div class="cart-item">
+      <div class="item-index">${i + 1}</div>
+      <div class="item-body">
+        <div class="item-name">${esc(item.name)}</div>
+        <div class="item-meta">
+          <span class="meta-tag ${item.source}">
+            <i data-lucide="${item.source === 'scan' ? 'scan-line' : 'pencil'}"></i>
+            ${item.source === 'scan' ? 'Scanned' : 'Manual'}
+          </span>
+          ${item.store ? `<span class="meta-tag"><i data-lucide="store"></i>${esc(item.store)}</span>` : ''}
+        </div>
+      </div>
+      <div class="item-price">${fmt(item.price)}</div>
+      <button class="btn-remove" onclick="removeItem(${item.id})" title="Remove">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+  `).join('')}</div>`;
+
+  lucide.createIcons();
+}
+
+render();
+</script>
+</body>
+</html>
